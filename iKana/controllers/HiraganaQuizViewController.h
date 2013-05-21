@@ -14,4 +14,8 @@
 @property (strong, nonatomic) UIPageControl *pageControl;
 @property (strong, nonatomic) NSMutableArray *contentList;
 
+- (void)updateSlidingMenu;
+- (void)setBackHiragana;
+- (void)gotoNextPage;
+
 @end

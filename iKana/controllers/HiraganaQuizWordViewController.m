@@ -7,6 +7,10 @@
 //
 
 #import "HiraganaQuizWordViewController.h"
+#import "Hiragana.h"
+#import "CoreDataManager.h"
+#import "HiraganaQuizViewController.h"
+#import "DeviceUtil.h"
 
 @interface HiraganaQuizWordViewController ()
 
@@ -18,6 +22,7 @@
     IBOutlet UILabel *romajiLabel;
     IBOutlet UIButton *showRomajiBtn;
     NSInteger attemptTimes;
+    Hiragana *hiragana;
 }
 
 - (id)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil
@@ -34,7 +39,7 @@
     if (self = [super init])
     {
         romaji = Romaji;
-        romajiLabel.text = Romaji;
+        hiragana = [[CoreDataManager sharedInstance] hiraganaWithRomaji:Romaji];
     }
     return self;
 }
@@ -49,6 +54,7 @@
 {
     romajiLabel.text = romaji;
     romajiLabel.hidden = YES;
+//    NSLog(@"%@", hiragana);
 }
 
 - (void)didReceiveMemoryWarning
@@ -98,20 +104,27 @@
 - (void)alertView:(UIAlertView *)alertView clickedButtonAtIndex:(NSInteger)buttonIndex
 {
     NSString *title = [alertView buttonTitleAtIndex:buttonIndex];
+    HiraganaQuizViewController *quizVC = (HiraganaQuizViewController *)self.parentViewController;
     if([title isEqualToString:@"OK"])
     {
         UITextField *romajiInput = [alertView textFieldAtIndex:0];
         if ([[romajiInput.text lowercaseString] isEqualToString:romaji])
         {
+            hiragana.successTime = @([hiragana.successTime integerValue] + 1);
+            if (quizVC)
+                [quizVC updateSlidingMenu];
             UIAlertView *message = [[UIAlertView alloc] initWithTitle:@"Correct!"
                                                               message:nil
                                                              delegate:nil
-                                                    cancelButtonTitle:@"OK"
+                                                    cancelButtonTitle:@"Close"
                                                     otherButtonTitles:nil];
             [message show];
         }
         else
         {
+            hiragana.failureTime = @([hiragana.failureTime integerValue] + 1);
+            if (quizVC)
+                [quizVC updateSlidingMenu];
             attemptTimes++;
             
             if (attemptTimes >= 3)
@@ -140,6 +153,11 @@
         romajiLabel.hidden = NO;
         [showRomajiBtn setTitle:@"Hide Romaji" forState:UIControlStateNormal];
     }
+    else if([title isEqualToString:@"Next"])
+    {
+        if (quizVC)
+            [quizVC gotoNextPage];
+    }
 }
 
 - (BOOL)alertViewShouldEnableFirstOtherButton:(UIAlertView *)alertView
@@ -155,8 +173,8 @@
     }
 }
 
-- (void)viewDidUnload {
-    [self setHiraganaImageView:nil];
+- (void)viewDidUnload
+{
     [self setHiraganaImageView:nil];
     romajiLabel = nil;
     showRomajiBtn = nil;
